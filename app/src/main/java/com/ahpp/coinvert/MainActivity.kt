@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,8 +21,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -57,78 +61,91 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        installSplashScreen()
         preferenceManager = PreferenceManager(this)
 
-        if(isNetworkAvailable(this)){
+        if (isNetworkAvailable(this)) {
             //se tiver conexao com internet, atualize tudo
-            val api = Api()
-            api.setCurrencyRates(this@MainActivity)
-            this.currencyRatesSorted = api.getCurrencyRates().toSortedMap()
-            this.keysList = currencyRatesSorted.keys.toList()
-            this.valuesList = currencyRatesSorted.values.toList()
-            this.dataUltimaAtt = api.getDate()
-            // Salve os novos dados localmente
-            preferenceManager.saveData(keysList, valuesList, dataUltimaAtt)
-        } else if (preferenceManager.hasSavedData()){
+            atualizarDados()
+            setContent {
+                DrawBackground()
+            }
+
+        } else if (preferenceManager.hasSavedData()) {
             //se tiver dados salvos localmente, use-os
             this.keysList = preferenceManager.getKeysList()
             this.valuesList = preferenceManager.getValuesList()
             this.dataUltimaAtt = preferenceManager.getDataUltimaAtt()
-            Toast.makeText(this, "Sem conexão. Usando dados previamente salvos.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "Sem conexão. Usando dados previamente salvos.",
+                Toast.LENGTH_SHORT
+            ).show()
+            setContent {
+                DrawBackground()
+            }
         } else {
-            Toast.makeText(this, "Sem conexão. Fechando app.", Toast.LENGTH_SHORT).show()
-            finish()
-        }
-
-        installSplashScreen()
-        setContent {
-            DrawBackground()
+            setContent {
+                DrawNoNetwork()
+            }
         }
     }
 
     @Composable
     fun DrawBackground() {
-        Box(
+        Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color(0xFF018685), Color(0xFF86E2D9))))
         ) {
-            //imagem
-            Image(
-                painter = painterResource(id = R.drawable.coin_money),
-                contentDescription = null,
+            Box(
                 modifier = Modifier
-                    .size(150.dp)
-                    .align(Alignment.BottomStart)
-                    .padding(start = 10.dp, bottom = 10.dp)
-            )
-            Column(
-                modifier = Modifier
-                    .fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color(0xFF018685),
+                                Color(0xFF86E2D9)
+                            )
+                        )
+                    )
             ) {
-                //header
-                AnimatedBorderCard(
+                //imagem
+                Image(
+                    painter = painterResource(id = R.drawable.coin_money),
+                    contentDescription = null,
                     modifier = Modifier
-                        .height(300.dp)
-                        .fillMaxWidth()
-                        .padding(top = 50.dp, start = 16.dp, end = 16.dp),
-                    shape = RoundedCornerShape(size = 10.dp),
-                    gradient = Brush.linearGradient(listOf(Color(0xFFFEC00D), Color.Cyan)),
-                    borderWidth = 5.dp
-                ) {
-                    //coloque os elementos aqui
-                    DrawItens()
-                }
-                //textinhos
-                Text(
-                    text = dataUltimaAtt,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 10.dp)
+                        .size(150.dp)
+                        .align(Alignment.BottomStart)
+                        .padding(start = 10.dp, bottom = 10.dp)
                 )
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    //header
+                    AnimatedBorderCard(
+                        modifier = Modifier
+                            .height(300.dp)
+                            .fillMaxWidth()
+                            .padding(top = 50.dp, start = 16.dp, end = 16.dp),
+                        shape = RoundedCornerShape(size = 10.dp),
+                        gradient = Brush.linearGradient(listOf(Color(0xFFFEC00D), Color.Cyan)),
+                        borderWidth = 5.dp
+                    ) {
+                        //coloque os elementos aqui
+                        DrawItens()
+                    }
+                    //textinhos
+                    Text(
+                        text = dataUltimaAtt,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 10.dp)
+                    )
+                }
             }
         }
     }
@@ -220,6 +237,68 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @Composable
+    fun DrawNoNetwork() {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFF018685),
+                            Color(0xFF86E2D9)
+                        )
+                    )
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(10.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Verifique sua conexão com internet e tente novamente.",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    fontSize = 25.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+                Button(
+                    modifier = Modifier.padding(top = 10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF018786)),
+                    onClick = {
+                        if (!isNetworkAvailable(this@MainActivity)) {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Sem conexão",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Atualizando dados... Aguarde",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            atualizarDados()
+                            setContent {
+                                DrawBackground()
+                            }
+                        }
+                    }
+                ) {
+                    Text(
+                        "Tente novamente",
+                        fontSize = 20.sp
+                    )
+                }
+            }
+        }
+    }
+
     private fun calcularCotacao(valor: String, cotacaoDe: String, cotacaoPara: String): String {
         if (valor.isEmpty() || "N/A" == valor)
             return "0"
@@ -233,10 +312,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun isNetworkAvailable(context: Context): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    private fun isNetworkAvailable(context: Context): Boolean {
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = connectivityManager.activeNetwork
         val networkCapabilities = connectivityManager.getNetworkCapabilities(network)
         return networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+    }
+
+    private fun atualizarDados() {
+        val api = Api()
+        api.setCurrencyRates(this@MainActivity)
+        this.currencyRatesSorted = api.getCurrencyRates().toSortedMap()
+        this.keysList = currencyRatesSorted.keys.toList()
+        this.valuesList = currencyRatesSorted.values.toList()
+        this.dataUltimaAtt = api.getDate()
+        // Salve os novos dados localmente
+        preferenceManager.saveData(keysList, valuesList, dataUltimaAtt)
     }
 }
